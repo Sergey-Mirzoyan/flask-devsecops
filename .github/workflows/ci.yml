@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build-test-scan:
+  build-test-scan-publish:
     runs-on: ubuntu-latest
 
     steps:
@@ -33,6 +33,7 @@ jobs:
         with:
           image-ref: 'flask-devsecops:latest'
           format: 'table'
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
