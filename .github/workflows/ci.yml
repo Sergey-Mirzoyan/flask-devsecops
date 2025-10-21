@@ -41,15 +41,14 @@ jobs:
             -Dsonar.host.url=https://sonarcloud.io
             -Dsonar.verbose=true
 
-      - name: Build Docker image
-        run: |
-          docker build -t ${{ github.repository }}:latest .
-
-      - name: Docker Image Scan (Trivy)
-        uses: aquasecurity/trivy-action@master
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
         with:
-          image-ref: ${{ github.repository }}:latest
-          format: 'table'
-          exit-code: '0'
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/myimage:latest
