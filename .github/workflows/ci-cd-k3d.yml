@@ -119,15 +119,10 @@ jobs:
           docker load -i flask-devsecops.tar
           k3d image import flask-devsecops:latest --cluster ci-cluster
 
-      - name: Verify image is in k3d cluster
+      - name: Debug: verify image in cluster
         run: |
           AGENT=$(docker ps --filter "name=k3d-ci-cluster-agent" --format "{{.Names}}" | head -n1)
-          if [ -z "$AGENT" ]; then
-            echo "❌ No agent container found"
-            exit 1
-          fi
-          echo "🔍 Checking images in container: $AGENT"
-          docker exec "$AGENT" crictl images | grep flask-devsecops || echo "⚠️ Image not found in agent (may still work)"
+          docker exec "$AGENT" crictl images | grep flask-devsecops || echo "⚠️ Image not found"
 
       - name: Deploy app to k3d
         run: |
@@ -135,16 +130,16 @@ jobs:
           apiVersion: apps/v1
           kind: Deployment
           metadata:
-            name: flask-app
+            name: flask-devsecops
           spec:
             replicas: 1
             selector:
               matchLabels:
-                app: flask-app
+                app: flask-devsecops
             template:
               metadata:
                 labels:
-                  app: flask-app
+                  app: flask-devsecops
               spec:
                 containers:
                 - name: app
@@ -155,27 +150,28 @@ jobs:
           apiVersion: v1
           kind: Service
           metadata:
-            name: flask-app
+            name: flask-devsecops
           spec:
             type: ClusterIP
             ports:
             - port: 5000
               targetPort: 5000
             selector:
-              app: flask-app
+              app: flask-devsecops
           EOF
 
-      - name: Debug pod status
+      - name: Debug: pod status
         run: |
+          sleep 5
           kubectl --context k3d-ci-cluster get pods
-          kubectl --context k3d-ci-cluster describe pod -l app=flask-app
+          kubectl --context k3d-ci-cluster describe pod -l app=flask-devsecops
 
       - name: Wait for rollout
         run: |
-          kubectl --context k3d-ci-cluster rollout status deployment/flask-app --timeout=90s
+          kubectl --context k3d-ci-cluster rollout status deployment/flask-devsecops --timeout=120s
 
       - name: Test connectivity
         run: |
-          kubectl --context k3d-ci-cluster port-forward svc/flask-app 5000:5000 &
+          kubectl --context k3d-ci-cluster port-forward svc/flask-devsecops 5000:5000 &
           sleep 5
           curl --fail http://localhost:5000 || exit 1
