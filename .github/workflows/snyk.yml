@@ -30,4 +30,5 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: test
+          
           args: --file=requirements.txt --severity-threshold=high
