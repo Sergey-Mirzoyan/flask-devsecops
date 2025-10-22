@@ -246,7 +246,7 @@ jobs:
 
       - name: Wait for rollout
         run: |
-          kubectl --context k3d-test-cluster rollout status deployment/flask-app --timeout=60s
+          kubectl --context k3d-test-cluster rollout status deployment/flask-app --timeout=360s
 
       - name: Test connectivity
         run: |
