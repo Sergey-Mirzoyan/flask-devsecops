@@ -103,12 +103,14 @@ jobs:
         run: |
           k3d cluster create ci-cluster --agents 1 --wait
 
-      - name: Load Docker image into k3d
+      - name: Download Docker image artifact
         uses: actions/download-artifact@v4
         with:
           name: docker-image
           path: .
-      - run: |
+
+      - name: Load and import image into k3d
+        run: |
           docker load -i flask-devsecops.tar
           k3d image import flask-devsecops:latest --cluster ci-cluster
 
