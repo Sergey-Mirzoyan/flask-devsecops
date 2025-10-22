@@ -119,6 +119,9 @@ jobs:
           docker load -i flask-devsecops.tar
           k3d image import flask-devsecops:latest --cluster ci-cluster
 
+      - name: Verify image is in cluster
+        run: k3d image list --cluster ci-cluster
+
       - name: Deploy app to k3d
         run: |
           kubectl --context k3d-ci-cluster apply -f - <<EOF
@@ -155,11 +158,16 @@ jobs:
               app: flask-app
           EOF
 
+      - name: Debug pod status
+        run: |
+          kubectl --context k3d-ci-cluster get pods
+          kubectl --context k3d-ci-cluster describe pod -l app=flask-app
+
       - name: Wait for rollout
         run: |
-          kubectl --context k3d-ci-cluster rollout status deployment/flask-app --timeout=60s
+          kubectl --context k3d-ci-cluster rollout status deployment/flask-app --timeout=90s
 
-      - name: Test connectivity (port-forward + curl)
+      - name: Test connectivity
         run: |
           kubectl --context k3d-ci-cluster port-forward svc/flask-app 5000:5000 &
           sleep 5
