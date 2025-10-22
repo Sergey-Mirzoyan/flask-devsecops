@@ -28,7 +28,7 @@ jobs:
       run: pytest || true
 
     # 🔹 SonarCloud Scan
-    - name: SonarCloud Scan
+    - name: SonarCloud Scan (Python)
       uses: SonarSource/sonarcloud-github-action@master
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -36,7 +36,11 @@ jobs:
         args: >
           -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
           -Dsonar.organization=${{ secrets.SONAR_ORG }}
+          -Dsonar.language=py
+          -Dsonar.sources=.
+          -Dsonar.exclusions=**/tests/**
           -Dsonar.python.version=3.10
+          -Dsonar.sourceEncoding=UTF-8
 
   docker-build-push-scan:
     runs-on: ubuntu-latest
