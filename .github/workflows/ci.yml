@@ -130,4 +130,5 @@ jobs:
     - name: Get NodePort
       run: |
         NODE_PORT=$(kubectl --context k3d-dev-cluster get svc flask-devsecops -o jsonpath='{.spec.ports[0].nodePort}')
+        
         echo "App available at: http://localhost:$NODE_PORT"
