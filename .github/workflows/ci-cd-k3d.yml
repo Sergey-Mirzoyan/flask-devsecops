@@ -21,19 +21,25 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Run tests
-        run: pytest || echo "No tests"
+        run: |
+          if command -v pytest &> /dev/null; then
+            pytest || echo "No tests or tests failed — continuing"
+          else
+            echo "pytest not found — skipping tests"
+          fi
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
+        uses: SonarSource/sonarcloud-github-action@v2
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
             -Dsonar.organization=${{ secrets.SONAR_ORG }}
+            -Dsonar.host.url=https://sonarcloud.io
             -Dsonar.language=py
             -Dsonar.sources=.
             -Dsonar.exclusions=**/tests/**
@@ -47,12 +53,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
       - name: Build Docker image
         run: |
           docker build -t flask-devsecops:latest .
+
+      - name: Save image for next job
+        run: |
+          docker save flask-devsecops:latest -o flask-devsecops.tar
+
+      - name: Upload Docker image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-image
+          path: flask-devsecops.tar
 
       - name: Trivy Scan (filesystem)
         uses: aquasecurity/trivy-action@master
@@ -72,20 +85,12 @@ jobs:
           exit-code: 0
           severity: CRITICAL,HIGH
 
-      - name: Snyk Scan (Python)
+      - name: Snyk Scan (Python dependencies)
         uses: snyk/actions/python@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           args: --file=requirements.txt --severity-threshold=high
-
-      - name: Save image for next job
-        run: |
-          docker save flask-devsecops:latest -o flask-devsecops.tar
-        uses: actions/upload-artifact@v4
-        with:
-          name: docker-image
-          path: flask-devsecops.tar
 
   deploy-and-test-k3d:
     runs-on: ubuntu-latest
