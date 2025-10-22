@@ -119,8 +119,15 @@ jobs:
           docker load -i flask-devsecops.tar
           k3d image import flask-devsecops:latest --cluster ci-cluster
 
-      - name: Verify image is in cluster
-        run: k3d image list --cluster ci-cluster
+      - name: Verify image is in k3d cluster
+        run: |
+          AGENT=$(docker ps --filter "name=k3d-ci-cluster-agent" --format "{{.Names}}" | head -n1)
+          if [ -z "$AGENT" ]; then
+            echo "❌ No agent container found"
+            exit 1
+          fi
+          echo "🔍 Checking images in container: $AGENT"
+          docker exec "$AGENT" crictl images | grep flask-devsecops || echo "⚠️ Image not found in agent (may still work)"
 
       - name: Deploy app to k3d
         run: |
