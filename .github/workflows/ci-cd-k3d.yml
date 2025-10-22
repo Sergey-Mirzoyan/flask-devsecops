@@ -97,7 +97,7 @@ jobs:
     needs: docker-build-scan
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4  
 
       - name: Install k3d and kubectl
         run: |
@@ -168,7 +168,7 @@ jobs:
 
       - name: Wait for rollout
         run: |
-          kubectl --context k3d-ci-cluster rollout status deployment/flask-devsecops --timeout=120s
+          kubectl --context k3d-ci-cluster rollout status deployment/flask-devsecops --timeout=240s
 
       - name: Test connectivity
         run: |
